@@ -1,13 +1,21 @@
 from conans import ConanFile, CMake
-from conans.tools import load
+from conans.tools import load, Git
 import re
 
+def get_version_suffix():
+    try:
+        g = Git()
+        if g.get_branch().startswith('release/'):
+            return ''
+        return '+' + g.get_commit().strip()[0:8]
+    except Exception:
+        return '-SNAPSHOT'
 
 def get_version():
     try:
         content = load("CMakeLists.txt")
         version = re.search(r"^\s*project\(resource_pool\s+VERSION\s+([^\s]+)", content, re.M).group(1)
-        return version.strip()
+        return version.strip() + get_version_suffix()
     except Exception:
         return None
 
@@ -22,7 +30,7 @@ class ResourcePool(ConanFile):
     exports_sources = 'include/*', 'CMakeLists.txt', 'resource_poolConfig.cmake', 'LICENCE', 'AUTHORS'
 
     generators = 'cmake_paths'
-    requires = 'boost/1.70.0@conan/stable'
+    requires = 'boost/1.71.0@conan/stable'
 
     def _configure_cmake(self):
         cmake = CMake(self)
