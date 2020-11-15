@@ -9,9 +9,13 @@ using ofstream_pool = yamail::resource_pool::async::pool<std::unique_ptr<std::of
 using time_traits = yamail::resource_pool::time_traits;
 
 struct on_get {
+#if BOOST_VERSION >= 107400
+    using executor_type = boost::asio::strand<boost::asio::execution::any_executor<boost::asio::execution::blocking_t::never_t>>;
+#else
     using executor_type = boost::asio::io_context::strand;
+#endif
 
-    boost::asio::io_context::strand& strand;
+    executor_type& strand;
 
     void operator ()(const boost::system::error_code& ec, ofstream_pool::handle handle) {
         try {
@@ -45,7 +49,11 @@ struct on_get {
 
 int main() {
     boost::asio::io_context service;
-    boost::asio::io_context::strand strand(service);
+#if BOOST_VERSION >= 107400
+    on_get::executor_type strand{boost::asio::make_strand(service)};
+#else
+    on_get::executor_type strand(service);
+#endif
     ofstream_pool pool(2, 10);
     pool.get_auto_waste(service, on_get {strand}, time_traits::duration::max());
     pool.get_auto_waste(service, on_get {strand}, time_traits::duration::max());

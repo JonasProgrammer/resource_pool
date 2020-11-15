@@ -22,7 +22,7 @@ class ResourcePool(ConanFile):
     exports_sources = 'include/*', 'CMakeLists.txt', 'resource_poolConfig.cmake', 'LICENCE', 'AUTHORS'
 
     generators = 'cmake_paths'
-    requires = 'boost/1.71.0@conan/stable'
+    requires = 'boost/1.74.0'
 
     def _configure_cmake(self):
         cmake = CMake(self)
@@ -41,4 +41,12 @@ class ResourcePool(ConanFile):
         self.info.header_only()
 
     def package_info(self):
-        self.cpp_info.libs = ['resource_pool']
+        self.cpp_info.components["_resource_pool"].libs = ["resource_pool"]
+        self.cpp_info.components["_resource_pool"].requires = ["boost::boost"]
+
+        self.cpp_info.filenames["cmake_find_package"] = "resource_pool"
+        self.cpp_info.filenames["cmake_find_package_multi"] = "resource_pool"
+        self.cpp_info.names["cmake_find_package"] = "elsid"
+        self.cpp_info.names["cmake_find_package_multi"] = "elsid"
+        self.cpp_info.components["_resource_pool"].names["cmake_find_package"] = "resource_pool"
+        self.cpp_info.components["_resource_pool"].names["cmake_find_package_multi"] = "resource_pool"
