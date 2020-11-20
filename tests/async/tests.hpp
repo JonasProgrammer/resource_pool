@@ -67,7 +67,7 @@ struct mocked_executor {
     const executor_mock* impl = nullptr;
     asio::execution_context* context_ = nullptr;
 
-    asio::execution_context& context() noexcept {
+    asio::execution_context& context() const noexcept {
         return *context_;
     }
 
@@ -97,6 +97,25 @@ struct mocked_executor {
     friend bool operator ==(const mocked_executor& lhs, const mocked_executor& rhs) {
         return lhs.context_ == rhs.context_ && lhs.impl == rhs.impl;
     }
+
+#if BOOST_VERSION >= 107400
+    friend bool operator !=(const mocked_executor& lhs, const mocked_executor& rhs) {
+        return !(lhs == rhs);
+    }
+
+    static constexpr auto query(asio::execution::blocking_t) noexcept {
+        return asio::execution::blocking_t::possibly;
+    }
+
+    asio::execution_context& query(asio::execution::context_t) const noexcept {
+        return context();
+    }
+
+    template <class Function>
+    void execute(Function&& f) const {
+        this->post(std::forward<Function>(f), {});
+    }
+#endif
 };
 
 struct mocked_io_context : asio::execution_context {
@@ -120,6 +139,12 @@ namespace asio {
 template <>
 struct is_executor<tests::mocked_executor> : true_type {};
 
+#if BOOST_VERSION >= 107400
+namespace execution {
+template <>
+struct is_executor<tests::mocked_executor> : true_type {};
+}
+#endif
 } // namespace asio
 } // namespace boost
 

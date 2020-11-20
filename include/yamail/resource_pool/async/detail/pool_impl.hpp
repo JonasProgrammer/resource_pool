@@ -95,7 +95,11 @@ private:
 template <class T>
 class list_iterator_handler {
 public:
+#if BOOST_VERSION < 107400
     using executor_type = asio::executor;
+#else
+    using executor_type = asio::execution::any_executor<>;
+#endif
 
     list_iterator_handler() = default;
 
@@ -123,7 +127,7 @@ public:
     }
 
 private:
-    asio::executor executor;
+    executor_type executor;
     std::unique_ptr<base_list_iterator_handler_impl<T>> impl;
 };
 
