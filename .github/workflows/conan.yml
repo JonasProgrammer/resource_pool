@@ -21,7 +21,7 @@ jobs:
         conan create . elsid/stable
     - uses: grisumbras/conan-upload@latest
       with:
-        login: johndoe
+        login: cjp
         password: ${{ secrets.SECRET_CONAN_PASSSWORD }}
         reference: resource_pool/${{ env.pkg_ver }}@elsid/stable
         url: https://api.bintray.com/conan/jsje/public 
