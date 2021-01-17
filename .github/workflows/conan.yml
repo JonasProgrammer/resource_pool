@@ -1,0 +1,29 @@
+name: Conan
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - conan-auto-build
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: turtlebrowser/get-conan@v1.0
+    - uses: actions/checkout@v2
+    - run: |
+        python3 - >>$GITHUB_ENV <<EOF
+        from conanfile import get_version
+        print('pkg_ver=' + get_version())
+        EOF
+        conan create . elsid/stable
+    - uses: grisumbras/conan-upload@latest
+      with:
+        login: johndoe
+        password: ${{ secrets.SECRET_CONAN_PASSSWORD }}
+        reference: resource_pool/${{ env.pkg_ver }}@elsid/stable
+        url: https://api.bintray.com/conan/jsje/public 
+
+
