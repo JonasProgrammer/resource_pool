@@ -2,6 +2,8 @@
 
 #include <yamail/resource_pool/async/detail/pool_impl.hpp>
 
+#include <boost/optional/optional_io.hpp>
+
 namespace {
 
 using namespace tests;
@@ -26,6 +28,15 @@ using queued_value_t = mocked_queue::queued_value_t;
 
 auto make_queued_value(mocked_queue::value_type&& request, mocked_io_context& io) {
     return boost::optional<queued_value_t>(queued_value_t {std::move(request), io});
+}
+
+}
+
+namespace yamail::resource_pool::async::detail {
+
+template <class V, class I>
+inline std::ostream& operator <<(std::ostream& stream, const queued_value<V, I>&) {
+    return stream;
 }
 
 }
@@ -420,26 +431,6 @@ TEST_F(async_resource_pool_impl, get_recycled_after_disable_returns_error) {
     pool.disable();
     on_first_get();
     on_second_get();
-}
-
-struct custom_exception : public std::runtime_error {
-    using std::runtime_error::runtime_error;
-};
-
-struct throw_exception {
-    void operator ()(const error_code&, resource_ptr_list_iterator) const {
-        throw custom_exception("custom_exception");
-    }
-};
-
-TEST_F(async_resource_pool_impl, get_and_throw_exception_on_handle_should_pass_exception) {
-    resource_pool_impl pool(1, 0, time_traits::duration::max(), time_traits::duration::max());
-
-    InSequence s;
-
-    EXPECT_CALL(executor, post(_)).WillOnce(SaveArg<0>(&on_first_get));
-    pool.get(io, throw_exception());
-    EXPECT_THROW(on_first_get(), custom_exception);
 }
 
 class set_and_recycle_resource {
